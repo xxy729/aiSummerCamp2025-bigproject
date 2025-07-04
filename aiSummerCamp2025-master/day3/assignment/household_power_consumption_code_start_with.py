@@ -4,7 +4,7 @@ import pandas as pd
 
 # %%
 # load data
-df = pd.read_csv('data\\household_power_consumption.txt', sep = ";")
+df = pd.read_csv('data//household_power_consumption.txt', sep = ";")
 df.head()
 # %%
 # check the data
