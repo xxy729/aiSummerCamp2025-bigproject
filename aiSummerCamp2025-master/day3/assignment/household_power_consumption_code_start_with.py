@@ -1,11 +1,16 @@
 # %%
 import numpy as np
 import pandas as pd
-
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 # %%
 # load data
-df = pd.read_csv('data//household_power_consumption.txt', sep = ";")
-df.head()
+df = pd.read_csv('data//household_power_consumption.txt', sep = ";", na_values=["?", "NA", "nan", "NaN"])
+df.dropna(inplace=True)
+df['Global_active_power'] = df['Global_active_power'].astype(float)
 # %%
 # check the data
 df.info()
@@ -27,96 +32,100 @@ train, test = df.loc[df['datetime'] <= '2009-12-31'], df.loc[df['datetime'] > '2
 
 # %%
 # data normalization
-from sklearn.preprocessing import MinMaxScaler
-
-feature_cols = [col for col in train.columns if col not in ['datetime', 'Global_active_power']]
 scaler = MinMaxScaler()
-train[feature_cols] = scaler.fit_transform(train[feature_cols])
-test[feature_cols] = scaler.transform(test[feature_cols])
-
+train_power = train[['Global_active_power']].values
+test_power = test[['Global_active_power']].values
+scaler.fit(train_power)
+train_scaled = scaler.transform(train_power)
+test_scaled = scaler.transform(test_power)
 # %%
 # split X and y
-# 以'Global_active_power'为预测目标
-X_train = train[feature_cols].values
-y_train = train['Global_active_power'].values
-X_test = test[feature_cols].values
-y_test = test['Global_active_power'].values
+def create_sequences(data, seq_length):
+    xs, ys = [], []
+    for i in range(len(data) - seq_length):
+        x = data[i:(i + seq_length)]
+        y = data[i + seq_length]
+        xs.append(x)
+        ys.append(y)
+    return np.array(xs), np.array(ys).reshape(-1, 1)
 
+seq_length = 24  # 以24小时为一个序列
+X_train, y_train = create_sequences(train_scaled, seq_length)
+X_test, y_test = create_sequences(test_scaled, seq_length)
 # %%
-# create dataloaders
-import torch
-from torch.utils.data import TensorDataset, DataLoader
+# creat dataloaders
+class PowerDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y, dtype=torch.float32)
+    def __len__(self):
+        return len(self.X)
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
 
-X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
-X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
-y_test_tensor = torch.tensor(y_test, dtype=torch.float32)
-
-train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-
+batch_size = 64
+train_dataset = PowerDataset(X_train, y_train)
+test_dataset = PowerDataset(X_test, y_test)
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 # %%
 # build a LSTM model
-import torch.nn as nn
-
 class LSTMModel(nn.Module):
-    def __init__(self, input_size, hidden_size=64, num_layers=1):
+    def __init__(self, input_size=1, hidden_size=50, num_layers=2):
         super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, 1)
     def forward(self, x):
-        x = x.unsqueeze(1)  # (batch, seq_len=1, features)
         out, _ = self.lstm(x)
-        out = self.fc(out[:, -1, :])
-        return out.squeeze()
+        out = out[:, -1, :]
+        out = self.fc(out)
+        return out
 
-model = LSTMModel(input_size=X_train.shape[1])
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = LSTMModel().to(device)
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 # %%
 # train the model
-import torch.optim as optim
-
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
 epochs = 10
 for epoch in range(epochs):
     model.train()
-    running_loss = 0.0
     for X_batch, y_batch in train_loader:
-        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+        X_batch = X_batch.to(device)
+        y_batch = y_batch.to(device)
+        X_batch = X_batch.view(-1, seq_length, 1)
+        y_batch = y_batch.unsqueeze(1)  # 保证y和输出维度一致
         optimizer.zero_grad()
-        outputs = model(X_batch)
-        loss = criterion(outputs, y_batch)
+        output = model(X_batch)
+        loss = criterion(output, y_batch)
         loss.backward()
         optimizer.step()
-        running_loss += loss.item()
-    print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader):.4f}")
-
+    print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
 # %%
 # evaluate the model on the test set
 model.eval()
 preds = []
+actuals = []
 with torch.no_grad():
-    for X_batch, _ in test_loader:
+    for X_batch, y_batch in test_loader:
         X_batch = X_batch.to(device)
+        X_batch = X_batch.view(-1, seq_length, 1)
         output = model(X_batch)
-        preds.extend(output.cpu().numpy())
-
-from sklearn.metrics import mean_squared_error
-mse = mean_squared_error(y_test, preds)
+        preds.append(output.cpu().numpy())
+        actuals.append(y_batch.numpy())
+preds = np.concatenate(preds).reshape(-1, 1)
+actuals = np.concatenate(actuals).reshape(-1, 1)
+preds_inv = scaler.inverse_transform(preds)
+actuals_inv = scaler.inverse_transform(actuals)
+mse = np.mean((preds_inv - actuals_inv) ** 2)
 print(f"Test MSE: {mse:.4f}")
-
 # %%
 # plotting the predictions against the ground truth
-import matplotlib.pyplot as plt
-plt.figure(figsize=(12,4))
-plt.plot(y_test[:200], label='True')
-plt.plot(preds[:200], label='Predicted')
+plt.figure(figsize=(12, 6))
+plt.plot(actuals_inv[:500], label='True')
+plt.plot(preds_inv[:500], label='Predicted')
 plt.legend()
 plt.title('LSTM Prediction vs Ground Truth')
 plt.show()
+
+# %%
