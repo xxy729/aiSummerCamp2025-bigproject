@@ -1,1 +1,0 @@
-# fish weight prediction demo
