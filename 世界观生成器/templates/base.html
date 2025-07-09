@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>世界观生成器 - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-dragon"></i> 世界观生成器</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-magic"></i> 生成器</a></li>
+                    <li><a href="{{ url_for('history') }}" class="{% if request.path == '/history' %}active{% endif %}"><i class="fas fa-history"></i> 历史记录</a></li>
+                    <li><a href="{{ url_for('favorites') }}" class="{% if request.path == '/favorites' %}active{% endif %}"><i class="fas fa-star"></i> 收藏夹</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2023 世界观生成器 | 使用 Flask 构建</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+        function showAlert(type, message) {
+            Swal.fire({
+                icon: type,
+                title: message,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

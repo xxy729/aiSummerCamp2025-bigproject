@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}收藏夹{% endblock %}
+
+{% block content %}
+<div class="favorites-container">
+    <h2><i class="fas fa-star"></i> 我的收藏</h2>
+    
+    {% if favorites %}
+    <div class="favorites-list">
+        {% for item in favorites %}
+        <div class="favorite-item {{ item.style.lower() }}">
+            <div class="favorite-item-header">
+                <h3>{{ item.name }}</h3>
+                <span class="badge">{{ item.type }} · {{ item.style }}</span>
+                <span class="favorite-time">{{ item.timestamp }}</span>
+                <button class="btn btn-remove" onclick="removeFavorite('{{ item.timestamp }}', '{{ item.name }}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="favorite-item-detail">
+                <h4><i class="fas fa-info-circle"></i> 含义</h4>
+                <p>{{ item.meaning }}</p>
+                
+                <h4><i class="fas fa-book-open"></i> 详细信息</h4>
+                <pre>{{ item.detail }}</pre>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="far fa-star"></i>
+        <p>收藏夹为空</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function removeFavorite(timestamp, name) {
+    Swal.fire({
+        title: '确认移除?',
+        text: `确定要从收藏夹移除: ${name}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '移除',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/remove_favorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    timestamp: timestamp,
+                    name: name
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', '已移除收藏');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

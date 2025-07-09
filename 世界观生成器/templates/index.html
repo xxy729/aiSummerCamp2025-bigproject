@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}生成器{% endblock %}
+
+{% block content %}
+<div class="generator-container">
+    <div class="generator-form">
+        <h2><i class="fas fa-cog"></i> 生成选项</h2>
+        <form id="generate-form">
+            <div class="form-group">
+                <label for="name-type"><i class="fas fa-tag"></i> 选择类型:</label>
+                <select id="name-type" name="name_type" class="form-control">
+                    {% for type in name_types %}
+                    <option value="{{ type }}">{{ type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="style"><i class="fas fa-paint-brush"></i> 选择风格:</label>
+                <select id="style" name="style" class="form-control">
+                    {% for style in styles %}
+                    <option value="{{ style }}">{{ style }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-generate">
+                <i class="fas fa-magic"></i> 生成名称
+            </button>
+        </form>
+    </div>
+    
+    <div class="generator-result">
+        <h2><i class="fas fa-scroll"></i> 生成结果</h2>
+        <div id="result-container" class="hidden">
+            <div class="result-header">
+                <h3 id="result-name"></h3>
+                <span id="result-type-style" class="badge"></span>
+                <button id="add-favorite" class="btn btn-favorite">
+                    <i class="far fa-star"></i> 收藏
+                </button>
+            </div>
+            
+            <div class="result-meaning">
+                <h4><i class="fas fa-info-circle"></i> 含义</h4>
+                <p id="result-meaning"></p>
+            </div>
+            
+            <div class="result-detail">
+                <h4><i class="fas fa-book-open"></i> 详细信息</h4>
+                <pre id="result-detail"></pre>
+            </div>
+        </div>
+        
+        <div id="empty-result" class="empty-state">
+            <i class="fas fa-hat-wizard"></i>
+            <p>点击"生成名称"按钮开始创造你的世界观</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateForm = document.getElementById('generate-form');
+    const nameTypeSelect = document.getElementById('name-type');
+    const styleSelect = document.getElementById('style');
+    const resultContainer = document.getElementById('result-container');
+    const emptyResult = document.getElementById('empty-result');
+    const resultName = document.getElementById('result-name');
+    const resultTypeStyle = document.getElementById('result-type-style');
+    const resultMeaning = document.getElementById('result-meaning');
+    const resultDetail = document.getElementById('result-detail');
+    const addFavoriteBtn = document.getElementById('add-favorite');
+    
+    let currentResult = null;
+    
+   // 更新风格选项
+nameTypeSelect.addEventListener('change', function() {
+    // 清空现有选项
+    styleSelect.innerHTML = '';
+    
+    // 获取当前类型的所有风格
+    const styles = {
+        '人名': ['奇幻', '科幻', '古风', '蒸汽朋克', '赛博朋克'],
+        '地名': ['奇幻', '科幻', '古风', '蒸汽朋克', '赛博朋克']
+    };
+    
+    // 添加新选项
+    styles[this.value].forEach(style => {
+        const option = document.createElement('option');
+        option.value = style;
+        option.textContent = style;
+        styleSelect.appendChild(option);
+    });
+});
+    
+    // 生成名称
+    generateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData);
+        
+        fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentResult = data;
+                
+                resultName.textContent = data.name;
+                resultTypeStyle.textContent = `${data.type} · ${data.style}`;
+                resultMeaning.textContent = data.meaning;
+                resultDetail.textContent = data.detail;
+                
+                emptyResult.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                
+                // 根据风格改变样式
+                resultContainer.className = 'result-container ' + data.style.toLowerCase();
+            } else {
+                showAlert('error', '生成失败: ' + data.error);
+            }
+        });
+    });
+    
+    // 添加到收藏夹
+    addFavoriteBtn.addEventListener('click', function() {
+        if (!currentResult) return;
+        
+        fetch('/add_favorite', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(currentResult)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                this.innerHTML = '<i class="fas fa-star"></i> 已收藏';
+                this.disabled = true;
+            } else {
+                showAlert('info', data.message);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

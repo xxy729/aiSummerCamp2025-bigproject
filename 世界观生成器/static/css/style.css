@@ -1,0 +1,338 @@
+/* 基础样式 */
+:root {
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --dark-color: #2d3436;
+    --light-color: #f5f6fa;
+    --success-color: #00b894;
+    --danger-color: #d63031;
+    --warning-color: #fdcb6e;
+    --info-color: #0984e3;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* 头部样式 */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 20px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    display: inline-block;
+    font-size: 1.8rem;
+    margin-right: 40px;
+}
+
+header h1 i {
+    margin-right: 10px;
+}
+
+nav ul {
+    display: inline-block;
+    list-style: none;
+}
+
+nav ul li {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+nav ul li a:hover {
+    opacity: 0.8;
+}
+
+nav ul li a.active {
+    border-bottom: 2px solid white;
+}
+
+/* 页脚样式 */
+footer {
+    background-color: var(--dark-color);
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+}
+
+/* 按钮样式 */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.btn-generate {
+    background-color: var(--success-color);
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+}
+
+.btn-generate:hover {
+    background-color: #00a884;
+}
+
+.btn-favorite {
+    background-color: var(--warning-color);
+    color: var(--dark-color);
+}
+
+.btn-favorite:hover {
+    background-color: #fdbb4e;
+}
+
+.btn-delete, .btn-remove {
+    background-color: transparent;
+    color: var(--danger-color);
+    padding: 5px 10px;
+}
+
+.btn-delete:hover, .btn-remove:hover {
+    background-color: rgba(214, 48, 49, 0.1);
+}
+
+/* 生成器页面样式 */
+.generator-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.generator-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.generator-form h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.generator-result {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.generator-result h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.result-header h3 {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--secondary-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.result-meaning, .result-detail {
+    margin-bottom: 20px;
+}
+
+.result-meaning h4, .result-detail h4 {
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.result-detail pre {
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 0;
+    color: #888;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: var(--secondary-color);
+}
+
+/* 历史记录和收藏夹样式 */
+.history-container, .favorites-container {
+    margin-top: 30px;
+}
+
+.history-list, .favorites-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.history-item, .favorite-item {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--primary-color);
+}
+
+.history-item-header, .favorite-item-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.history-item h3, .favorite-item h3 {
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+.history-time, .favorite-time {
+    color: #888;
+    font-size: 0.9rem;
+    margin-left: auto;
+}
+
+.history-item-detail, .favorite-item-detail {
+    padding-left: 10px;
+}
+
+.history-item-detail h4, .favorite-item-detail h4 {
+    margin-bottom: 8px;
+    color: var(--primary-color);
+}
+
+.history-item-detail pre, .favorite-item-detail pre {
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* 不同风格的配色 */
+.result-container.奇幻, 
+.history-item.奇幻, 
+.favorite-item.奇幻 {
+    border-left-color: #00b894;
+}
+
+.result-container.科幻, 
+.history-item.科幻, 
+.favorite-item.科幻 {
+    border-left-color: #0984e3;
+}
+
+.result-container.古风, 
+.history-item.古风, 
+.favorite-item.古风 {
+    border-left-color: #e17055;
+}
+
+.result-container.蒸汽朋克, 
+.history-item.蒸汽朋克, 
+.favorite-item.蒸汽朋克 {
+    border-left-color: #6c5ce7;
+}
+
+.result-container.赛博朋克, 
+.history-item.赛博朋克, 
+.favorite-item.赛博朋克 {
+    border-left-color: #fd79a8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .generator-container {
+        grid-template-columns: 1fr;
+    }
+    
+    header h1 {
+        display: block;
+        margin-bottom: 20px;
+    }
+    
+    nav ul li {
+        display: block;
+        margin-bottom: 10px;
+    }
+}
